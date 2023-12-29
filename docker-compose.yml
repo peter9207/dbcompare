@@ -1,0 +1,40 @@
+version: "3"
+services:
+  postgres:
+    image: postgres
+    hostname: postgresdb
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+  # mongodb:
+  #   image: mongo:latest
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: example
+  #   ports:
+  #     - 27017:27017
+  # worker:
+  #   image: worker
+  #   build:
+  #     context: ./worker
+  #     dockerfile: ./cmd/worker/Dockerfile
+  #   environment:
+  #     database_url: postgres://postgres:password@localhost:5432/postgres?sslmode=disable
+  #     plaid_country_codes: US,CA
+  #     plaid_env: sandbox
+  #     plaid_products: auth, transactions
+  #     plaid_client_id: 600f505554708300101bce5b
+  #     plaid_secret: 616b7c8b86960f4f3d3e12ed219f23
+  #     debug: "true"
+  # server:
+  #   image: server
+  #   build:
+  #     context: ./server
+  #     dockerfile: ./cmd/server/Dockerfile
+  #   environment:
+  #     database_url: postgres://postgres:password@localhost:5432/postgres?sslmode=disable
+  #   ports:
+  #     - 5000:5000
