@@ -1,35 +1,79 @@
 package executor
 
-import "github.com/peter9207/dbcompare/queries"
+import (
+	"sync"
+
+	"github.com/peter9207/dbcompare/queries"
+)
 
 type timedExecutor struct {
-	Ratio   float64
 	Seconds int64
-	db      *queries.Runner
+	db      queries.Runner
 }
 
-func NewTimedExecutor(ratio float64, seconds int64, db *queries.Runner) (e *timedExecutor) {
+func NewTimedExecutor(seconds int64, db queries.Runner) (e *timedExecutor) {
 
 	e = &timedExecutor{
-		Ratio:   ratio,
 		Seconds: seconds,
 		db:      db,
 	}
 	return
 }
 
-func (e *timedExecutor) runRead() (err error) {
-	_, err = e.db.PerformRead()
-	return
+func (e *timedExecutor) runRead(endCh chan bool) (err error) {
+	for {
+		err = e.db.PerformRead()
+		select {
+		case <-endCh:
+			return
+		default:
+
+		}
+	}
+
 }
 
-func (e *timedExecutor) runWrite() (err error) {
+func (e *timedExecutor) runWrite(endCh chan bool) (err error) {
 
-	_, err = e.db.PerformWrite()
-	return
+	for {
+		err = e.db.PerformWrite()
+		select {
+		case <-endCh:
+			return
+		default:
+
+		}
+	}
+
 }
 
-func (e *timedExecutor) Run(workers int64) (errCh chan error) {
+func (e *timedExecutor) Run(readWorkers, writeWorkers int64) (errCh chan error) {
+
+	var wg sync.WaitGroup
+
+	var stopCh chan bool
+
+	for i := int64(0); i < readWorkers; i++ {
+
+		go func() {
+			wg.Add(1)
+			e.runRead(stopCh)
+			wg.Done()
+		}()
+
+	}
+
+	for i := int64(0); i < writeWorkers; i++ {
+
+		go func() {
+			wg.Add(1)
+			e.runWrite(stopCh)
+			wg.Done()
+		}()
+
+	}
+
+	wg.Wait()
 
 	return
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type Runner interface {
@@ -29,7 +31,7 @@ func NewRunner(url string) (db *SQLRunner, err error) {
 	return
 }
 
-func (db *SQLRunner) PerformRead() (res []int64, err error) {
+func (db *SQLRunner) PerformRead() (err error) {
 
 	rows, err := db.db.Query("select * from items limit 20")
 	if err != nil {
@@ -37,13 +39,13 @@ func (db *SQLRunner) PerformRead() (res []int64, err error) {
 	}
 	defer rows.Close()
 
-	res = []int64{}
+	// res = []int64{}
 	var r int64
 
 	for rows.Next() {
 		rows.Scan(&r)
 
-		res = append(res, r)
+		// res = append(res, r)
 	}
 
 	return
@@ -93,6 +95,35 @@ func (db *SQLRunner) randomName() string {
 	return fmt.Sprintf("%d", db.rand.Int63())
 }
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+func (db *SQLRunner) Setup() (err error) {
+
+	for i := 0; i < 10; i++ {
+		name := randStringRunes(10)
+		_, err = db.db.Exec("INSERT INTO warehouses ( name) VALUES ($1)", fmt.Sprintf("warehouse-%s", name))
+		if err != nil {
+			return
+		}
+	}
+
+	for i := 0; i < 10; i++ {
+		typeName := randStringRunes(10)
+		_, err = db.db.Exec("INSERT INTO item_types ( name) VALUES ($1)", fmt.Sprintf("type-%s", typeName))
+
+	}
+
+	return
+}
+
 func (db *SQLRunner) PerformWrite() (err error) {
 
 	warehouseID, err := db.listWarehouse()
@@ -106,7 +137,7 @@ func (db *SQLRunner) PerformWrite() (err error) {
 		return
 	}
 
-	_, err = db.db.Exec("INSERT INTO items (name, item_type_id, warehouse_id)", name, itemType, warehouseID)
+	_, err = db.db.Exec("INSERT INTO items (name, item_type_id, warehouse_id) VALUES ($1, $2, $3)", name, itemType, warehouseID)
 	if err != nil {
 		return
 	}

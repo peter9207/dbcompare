@@ -7,12 +7,15 @@ package cmd
 import (
 	"strconv"
 
+	executor "github.com/peter9207/dbcompare/executor"
+	queries "github.com/peter9207/dbcompare/queries"
+
 	"github.com/spf13/cobra"
 )
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
-	Use:   "run",
+	Use:   "run <read> <write> <db>",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -27,10 +30,30 @@ to quickly create a Cobra application.`,
 			return
 		}
 
-		ratio, err := strconv.ParseFloat(args[0])
+		read, err := strconv.Atoi(args[0])
 		if err != nil {
 			panic(err)
 		}
+		write, err := strconv.Atoi(args[1])
+		if err != nil {
+			panic(err)
+		}
+
+		dbURL := args[2]
+
+		runner, err := queries.NewRunner(dbURL)
+		if err != nil {
+			panic(err)
+		}
+
+		err = runner.Setup()
+		if err != nil {
+			panic(err)
+		}
+
+		exec := executor.NewTimedExecutor(60, runner)
+
+		exec.Run(int64(read), int64(write))
 
 	},
 }
@@ -38,13 +61,4 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(runCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
