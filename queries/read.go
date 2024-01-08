@@ -53,7 +53,7 @@ func (db *SQLRunner) PerformRead() (err error) {
 
 func (db *SQLRunner) listWarehouse() (id int64, err error) {
 
-	rows, err := db.db.Query("select * from warehouses")
+	rows, err := db.db.Query("select id from warehouses")
 	if err != nil {
 		return
 	}
@@ -63,7 +63,10 @@ func (db *SQLRunner) listWarehouse() (id int64, err error) {
 	var r int64
 
 	for rows.Next() {
-		rows.Scan(&r)
+		err = rows.Scan(&r)
+		if err != nil {
+			return
+		}
 		res = append(res, r)
 	}
 
@@ -73,7 +76,7 @@ func (db *SQLRunner) listWarehouse() (id int64, err error) {
 
 func (db *SQLRunner) randomItemType() (id int64, err error) {
 
-	rows, err := db.db.Query("select * from item_types")
+	rows, err := db.db.Query("select id from item_types LIMIT 50")
 	if err != nil {
 		return
 	}
@@ -83,7 +86,10 @@ func (db *SQLRunner) randomItemType() (id int64, err error) {
 	var r int64
 
 	for rows.Next() {
-		rows.Scan(&r)
+		err = rows.Scan(&r)
+		if err != nil {
+			return
+		}
 		res = append(res, r)
 	}
 
@@ -136,8 +142,8 @@ func (db *SQLRunner) PerformWrite() (err error) {
 	if err != nil {
 		return
 	}
-
-	_, err = db.db.Exec("INSERT INTO items (name, item_type_id, warehouse_id) VALUES ($1, $2, $3)", name, itemType, warehouseID)
+	query := "INSERT INTO items (name, item_type_id, warehouse_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+	_, err = db.db.Exec(query, name, itemType, warehouseID, time.Now(), time.Now())
 	if err != nil {
 		return
 	}

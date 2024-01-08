@@ -5,6 +5,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"strconv"
 
 	executor "github.com/peter9207/dbcompare/executor"
@@ -51,10 +52,9 @@ to quickly create a Cobra application.`,
 			panic(err)
 		}
 
-		exec := executor.NewTimedExecutor(60, runner)
-
-		exec.Run(int64(read), int64(write))
-
+		exec := executor.NewTimedExecutor(5, runner)
+		res, _ := exec.Run(int64(read), int64(write))
+		fmt.Printf("in 5 seconds Read: %d, Write: %d", res.ReadCount, res.WriteCount)
 	},
 }
 

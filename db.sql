@@ -18,7 +18,7 @@ create table items (
   created_at timestamp,
   updated_at timestamp,
   FOREIGN KEY (item_type_id) references item_types(id),
-  FOREIGN KEY (warehouse_id) references warehouses(id),
+  FOREIGN KEY (warehouse_id) references warehouses(id)
   );
 
 
